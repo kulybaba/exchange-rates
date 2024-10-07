@@ -1,0 +1,29 @@
+<h3>Changes in exchange rates</h3>
+
+{% if privatbank is not empty %}
+    <p><b>PrivatBank:</b></p>
+    <ul>
+        {% for name, currencyRate in privatbank %}
+            {% if currencyRate.buy is defined and currencyRate.buy is not empty %}
+                <li>{{ name }} buy: {{ currencyRate.buy|number_format(2, ',') }}</li>
+            {% endif %}
+            {% if currencyRate.sell is defined and currencyRate.sell is not empty %}
+                <li>{{ name }} sell: {{ currencyRate.sell|number_format(2, ',') }}</li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if monobank is not empty %}
+    <p><b>Monobank:</b></p>
+    <ul>
+        {% for name, currencyRate in monobank %}
+            {% if currencyRate.buy is defined and currencyRate.buy is not empty %}
+                <li>{{ name }} buy: {{ currencyRate.buy|number_format(2, ',') }}</li>
+            {% endif %}
+            {% if currencyRate.sell is defined and currencyRate.sell is not empty %}
+                <li>{{ name }} sell: {{ currencyRate.sell|number_format(2, ',') }}</li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+{% endif %}
