@@ -39,7 +39,7 @@ class CheckExchangeRatesCommand extends Command
     {
         $this
             ->setHelp('Example: app:check-rates 42.45 USD')
-            ->addArgument('threshold', InputArgument::REQUIRED, 'Threshold of exchange rates (42.45)')
+            ->addArgument('threshold', InputArgument::REQUIRED, 'Threshold of exchange rates in UAH (0.25)')
             ->addArgument('name', InputArgument::OPTIONAL, 'Currency name (USD, EUR)');
     }
 
@@ -90,11 +90,11 @@ class CheckExchangeRatesCommand extends Command
         ];
 
         if (!empty($result['privatbank']) || !empty($result['monobank'])) {
-            $this->redisClient->set('privatbank', $newPrivatbankRatesJson);
-            $this->redisClient->set('monobank', $newMonobankRatesJson);
-
             $this->mailerService->sendCurrencyRatesMail($result);
         }
+
+        $this->redisClient->set('privatbank', $newPrivatbankRatesJson);
+        $this->redisClient->set('monobank', $newMonobankRatesJson);
 
         $io->success('SUCCESS');
 
@@ -114,24 +114,14 @@ class CheckExchangeRatesCommand extends Command
             }
 
             $storedCurrencyRate = $this->getCurrencyRateByName($newCurrencyRate['name'], $storedCurrencyRates);
-            if ($newCurrencyRate['buy'] >= $currencyThreshold) {
-                if ($newCurrencyRate['buy'] > $storedCurrencyRate['buy'] && $storedCurrencyRate['buy'] < $currencyThreshold) {
-                    $result[$newCurrencyRate['name']]['buy'] = $newCurrencyRate['buy'];
-                }
-            } else {
-                if ($newCurrencyRate['buy'] < $storedCurrencyRate['buy'] && $storedCurrencyRate['buy'] > $currencyThreshold) {
-                    $result[$newCurrencyRate['name']]['buy'] = $newCurrencyRate['buy'];
-                }
+            if (abs($newCurrencyRate['buy'] - $storedCurrencyRate['buy']) >= $currencyThreshold) {
+                $result[$newCurrencyRate['name']]['buy'] = $newCurrencyRate['buy'];
+                $result[$newCurrencyRate['name']]['buyOld'] = $storedCurrencyRate['buy'];
             }
 
-            if ($newCurrencyRate['sell'] >= $currencyThreshold) {
-                if ($newCurrencyRate['sell'] > $storedCurrencyRate['sell'] && $storedCurrencyRate['sell'] < $currencyThreshold) {
-                    $result[$newCurrencyRate['name']]['sell'] = $newCurrencyRate['sell'];
-                }
-            } else {
-                if ($newCurrencyRate['sell'] < $storedCurrencyRate['sell'] && $storedCurrencyRate['sell'] > $currencyThreshold) {
-                    $result[$newCurrencyRate['name']]['sell'] = $newCurrencyRate['sell'];
-                }
+            if (abs($newCurrencyRate['sell'] - $storedCurrencyRate['sell']) >= $currencyThreshold) {
+                $result[$newCurrencyRate['name']]['sell'] = $newCurrencyRate['sell'];
+                $result[$newCurrencyRate['name']]['sellOld'] = $storedCurrencyRate['sell'];
             }
         }
 
